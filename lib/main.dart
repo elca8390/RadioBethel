@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 
@@ -116,21 +117,6 @@ class _RadioHomePageState extends State<RadioHomePage> {
       if (!mounted) return;
       setState(() {
         _errorMessage = 'Error al iniciar la transmision.';
-      });
-    }
-  }
-
-  Future<void> _reconnectAndPlay() async {
-    try {
-      await _player.stop();
-      await _prepareAudio();
-      if (_errorMessage == null) {
-        await _player.play();
-      }
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _errorMessage = 'No fue posible reconectar. Intenta de nuevo.';
       });
     }
   }
@@ -360,11 +346,22 @@ class _RadioHomePageState extends State<RadioHomePage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[
-              _buildSmallControl(icon: Icons.music_note_rounded, onTap: () {}),
+              _buildSmallControl(
+                icon: FontAwesomeIcons.whatsapp,
+                onTap: () {},
+              ),
+              _buildSmallControl(
+                icon: FontAwesomeIcons.handHoldingHeart,
+                onTap: () {},
+              ),
               _buildMainControl(isPlaying: isPlaying, isBusy: isBusy),
               _buildSmallControl(
-                icon: Icons.refresh_rounded,
-                onTap: _reconnectAndPlay,
+                icon: FontAwesomeIcons.facebookF,
+                onTap: () {},
+              ),
+              _buildSmallControl(
+                icon: FontAwesomeIcons.tiktok,
+                onTap: () {},
               ),
             ],
           ),
@@ -467,12 +464,13 @@ class _RadioHomePageState extends State<RadioHomePage> {
       child: Container(
         width: 44,
         height: 44,
+        alignment: Alignment.center,
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.17),
           shape: BoxShape.circle,
           border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
         ),
-        child: Icon(icon, color: Colors.white, size: 24),
+        child: FaIcon(icon, color: Colors.white, size: 20),
       ),
     );
   }
