@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_image_slideshow/flutter_image_slideshow.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
@@ -6,6 +7,11 @@ import 'package:just_audio_background/just_audio_background.dart';
 const String _stationName = 'Radio Bethel Costa Rica';
 const String _stationSubtitle = 'Emisora Cristiana';
 const String _streamUrl = 'http://51.222.154.65:8186/stream';
+const List<String> _sliderImages = <String>[
+  'https://images.unsplash.com/photo-1504052434569-70ad5836ab65?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=1200&q=80',
+];
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -205,7 +211,7 @@ class _RadioHomePageState extends State<RadioHomePage> {
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: <Widget>[
                               _buildTopBar(),
-                              const Spacer(),
+                              const SizedBox(height: 14),
                               const Text(
                                 'EMISORA CRISTIANA',
                                 textAlign: TextAlign.center,
@@ -247,8 +253,9 @@ class _RadioHomePageState extends State<RadioHomePage> {
                                   color: Colors.white,
                                 ),
                               ),
-                              SizedBox(height: compact ? 28 : 34),
-                              const Spacer(),
+                              SizedBox(height: compact ? 14 : 18),
+                              Expanded(child: _buildImageSlider()),
+                              const SizedBox(height: 14),
                               _buildBottomPanel(
                                 isPlaying: isPlaying,
                                 isBusy: isBusy,
@@ -271,11 +278,7 @@ class _RadioHomePageState extends State<RadioHomePage> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: <Widget>[
         _buildHeaderIcon(Icons.menu_rounded),
-        Row(
-          children: <Widget>[
-            _buildHeaderIcon(Icons.settings_rounded),
-          ],
-        ),
+        Row(children: <Widget>[_buildHeaderIcon(Icons.settings_rounded)]),
       ],
     );
   }
@@ -293,10 +296,75 @@ class _RadioHomePageState extends State<RadioHomePage> {
     );
   }
 
-  Widget _buildBottomPanel({
-    required bool isPlaying,
-    required bool isBusy,
-  }) {
+  Widget _buildImageSlider() {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.22),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: ImageSlideshow(
+          width: double.infinity,
+          height: double.infinity,
+          autoPlayInterval: 4000,
+          isLoop: true,
+          indicatorColor: const Color(0xFFE02448),
+          indicatorBackgroundColor: Colors.white.withValues(alpha: 0.6),
+          children: _sliderImages
+              .map(
+                (String url) => Image.network(
+                  url,
+                  fit: BoxFit.cover,
+                  loadingBuilder:
+                      (
+                        BuildContext context,
+                        Widget child,
+                        ImageChunkEvent? loadingProgress,
+                      ) {
+                        if (loadingProgress == null) {
+                          return child;
+                        }
+                        return Container(
+                          color: Colors.black.withValues(alpha: 0.25),
+                          child: const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.4,
+                            ),
+                          ),
+                        );
+                      },
+                  errorBuilder:
+                      (BuildContext context, Object error, StackTrace? _) {
+                        return Container(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          alignment: Alignment.center,
+                          child: const Icon(
+                            Icons.image_not_supported_rounded,
+                            color: Colors.white70,
+                            size: 38,
+                          ),
+                        );
+                      },
+                ),
+              )
+              .toList(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomPanel({required bool isPlaying, required bool isBusy}) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
