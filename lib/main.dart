@@ -24,6 +24,7 @@ Future<void> main() async {
       androidNotificationChannelId: 'com.example.radiobethel.channel.audio',
       androidNotificationChannelName: 'Radio Bethel',
       androidNotificationOngoing: true,
+      androidNotificationIcon: 'mipmap/ic_launcher',
     );
   } catch (_) {
     // If the current platform does not support media notifications, continue.
@@ -244,50 +245,95 @@ class _RadioHomePageState extends State<RadioHomePage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: <Widget>[
-                                _buildTopBar(),
-                                const SizedBox(height: 14),
-                                const Text(
-                                  'EMISORA CRISTIANA',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 21,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 1.2,
-                                    color: Colors.white,
-                                  ),
+                              _buildTopBar(),
+                              const SizedBox(height: 14),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 10,
                                 ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  'Radio Bethel',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: titleSize,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: -1.8,
-                                    fontStyle: FontStyle.italic,
-                                    color: Colors.white,
-                                    shadows: <Shadow>[
-                                      Shadow(
-                                        color: Colors.black.withValues(
-                                          alpha: 0.25,
-                                        ),
-                                        blurRadius: 12,
-                                        offset: const Offset(0, 3),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.22),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Column(
+                                  children: <Widget>[
+                                    const Text(
+                                      'EMISORA CRISTIANA',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 21,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 1.2,
+                                        color: Colors.white,
+                                        shadows: <Shadow>[
+                                          Shadow(
+                                            color: Colors.black,
+                                            blurRadius: 6,
+                                            offset: Offset(0, 2),
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      'Radio Bethel',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: titleSize,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: -1.4,
+                                        fontStyle: FontStyle.italic,
+                                        color: Colors.white,
+                                        shadows: <Shadow>[
+                                          Shadow(
+                                            color: Colors.black.withValues(
+                                              alpha: 0.42,
+                                            ),
+                                            blurRadius: 14,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    const Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: <Widget>[
+                                        Text(
+                                          '🇨🇷',
+                                          style: TextStyle(fontSize: 24),
+                                        ),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          'Costa Rica',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.w800,
+                                            letterSpacing: 0.8,
+                                            color: Colors.white,
+                                            shadows: <Shadow>[
+                                              Shadow(
+                                                color: Colors.black,
+                                                blurRadius: 6,
+                                                offset: Offset(0, 2),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          '🇨🇷',
+                                          style: TextStyle(fontSize: 24),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
-                                const Text(
-                                  'Costa Rica',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 0.8,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                SizedBox(height: compact ? 14 : 18),
+                              ),
+                              SizedBox(height: compact ? 14 : 18),
                                 Expanded(child: _buildImageSlider()),
                                 const SizedBox(height: 14),
                                 _buildBottomPanel(
