@@ -1,15 +1,19 @@
 import 'dart:ui';
 
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_image_slideshow/flutter_image_slideshow.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:just_audio_background/just_audio_background.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 const String _stationName = 'Radio Bethel Costa Rica';
 const String _stationSubtitle = 'Emisora Cristiana';
 const String _streamUrl = 'http://51.222.154.65:8186/stream';
+const String _notificationArtworkUrl =
+    'https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=1000&q=80';
+const String _flagCr = '\u{1F1E8}\u{1F1F7}';
+
 const List<String> _sliderImages = <String>[
   'https://images.unsplash.com/photo-1504052434569-70ad5836ab65?auto=format&fit=crop&w=1200&q=80',
   'https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=1200&q=80',
@@ -19,22 +23,23 @@ const List<String> _sliderImages = <String>[
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  try {
-    await JustAudioBackground.init(
+  final AudioHandler handler = await AudioService.init(
+    builder: () => RadioAudioHandler(),
+    config: const AudioServiceConfig(
       androidNotificationChannelId: 'com.example.radiobethel.channel.audio',
       androidNotificationChannelName: 'Radio Bethel',
       androidNotificationOngoing: true,
       androidNotificationIcon: 'mipmap/ic_launcher',
-    );
-  } catch (_) {
-    // If the current platform does not support media notifications, continue.
-  }
+    ),
+  );
 
-  runApp(const RadioBethelApp());
+  runApp(RadioBethelApp(audioHandler: handler as RadioAudioHandler));
 }
 
 class RadioBethelApp extends StatelessWidget {
-  const RadioBethelApp({super.key});
+  const RadioBethelApp({required this.audioHandler, super.key});
+
+  final RadioAudioHandler audioHandler;
 
   @override
   Widget build(BuildContext context) {
@@ -48,20 +53,22 @@ class RadioBethelApp extends StatelessWidget {
           brightness: Brightness.dark,
         ),
       ),
-      home: const RadioHomePage(),
+      home: RadioHomePage(audioHandler: audioHandler),
     );
   }
 }
 
 class RadioHomePage extends StatefulWidget {
-  const RadioHomePage({super.key});
+  const RadioHomePage({required this.audioHandler, super.key});
+
+  final RadioAudioHandler audioHandler;
 
   @override
   State<RadioHomePage> createState() => _RadioHomePageState();
 }
 
 class _RadioHomePageState extends State<RadioHomePage> {
-  final AudioPlayer _player = AudioPlayer();
+  AudioPlayer get _player => widget.audioHandler.player;
   static final Uri _websiteUri = Uri.parse('https://www.radiobethelcr.com');
 
   bool _isInitializing = true;
@@ -83,17 +90,7 @@ class _RadioHomePageState extends State<RadioHomePage> {
 
     try {
       await _player.setVolume(_volume);
-      await _player.setAudioSource(
-        AudioSource.uri(
-          Uri.parse(_streamUrl),
-          tag: const MediaItem(
-            id: _streamUrl,
-            title: _stationName,
-            artist: _stationSubtitle,
-            album: 'Transmision en vivo',
-          ),
-        ),
-      );
+      await widget.audioHandler.prepare();
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -111,7 +108,7 @@ class _RadioHomePageState extends State<RadioHomePage> {
   Future<void> _togglePlayStop() async {
     try {
       if (_player.playing) {
-        await _player.stop();
+        await widget.audioHandler.stop();
         return;
       }
 
@@ -120,7 +117,7 @@ class _RadioHomePageState extends State<RadioHomePage> {
       }
 
       if (_errorMessage == null) {
-        await _player.play();
+        await widget.audioHandler.play();
       }
     } catch (_) {
       if (!mounted) return;
@@ -150,12 +147,6 @@ class _RadioHomePageState extends State<RadioHomePage> {
 
   Future<void> _openWebsite() async {
     await launchUrl(_websiteUri, mode: LaunchMode.externalApplication);
-  }
-
-  @override
-  void dispose() {
-    _player.dispose();
-    super.dispose();
   }
 
   @override
@@ -245,95 +236,95 @@ class _RadioHomePageState extends State<RadioHomePage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: <Widget>[
-                              _buildTopBar(),
-                              const SizedBox(height: 14),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 10,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.22),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Column(
-                                  children: <Widget>[
-                                    const Text(
-                                      'EMISORA CRISTIANA',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: 21,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 1.2,
-                                        color: Colors.white,
-                                        shadows: <Shadow>[
-                                          Shadow(
-                                            color: Colors.black,
-                                            blurRadius: 6,
-                                            offset: Offset(0, 2),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      'Radio Bethel',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: titleSize,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: -1.4,
-                                        fontStyle: FontStyle.italic,
-                                        color: Colors.white,
-                                        shadows: <Shadow>[
-                                          Shadow(
-                                            color: Colors.black.withValues(
-                                              alpha: 0.42,
+                                _buildTopBar(),
+                                const SizedBox(height: 14),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 10,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.22),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Column(
+                                    children: <Widget>[
+                                      const Text(
+                                        'EMISORA CRISTIANA',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: 21,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 1.2,
+                                          color: Colors.white,
+                                          shadows: <Shadow>[
+                                            Shadow(
+                                              color: Colors.black,
+                                              blurRadius: 6,
+                                              offset: Offset(0, 2),
                                             ),
-                                            blurRadius: 14,
-                                            offset: const Offset(0, 4),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        'Radio Bethel',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: titleSize,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: -1.4,
+                                          fontStyle: FontStyle.italic,
+                                          color: Colors.white,
+                                          shadows: <Shadow>[
+                                            Shadow(
+                                              color: Colors.black.withValues(
+                                                alpha: 0.42,
+                                              ),
+                                              blurRadius: 14,
+                                              offset: const Offset(0, 4),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      const Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: <Widget>[
+                                          Text(
+                                            _flagCr,
+                                            style: TextStyle(fontSize: 24),
+                                          ),
+                                          SizedBox(width: 8),
+                                          Text(
+                                            'Costa Rica',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              fontSize: 24,
+                                              fontWeight: FontWeight.w800,
+                                              letterSpacing: 0.8,
+                                              color: Colors.white,
+                                              shadows: <Shadow>[
+                                                Shadow(
+                                                  color: Colors.black,
+                                                  blurRadius: 6,
+                                                  offset: Offset(0, 2),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          SizedBox(width: 8),
+                                          Text(
+                                            _flagCr,
+                                            style: TextStyle(fontSize: 24),
                                           ),
                                         ],
                                       ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    const Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: <Widget>[
-                                        Text(
-                                          '🇨🇷',
-                                          style: TextStyle(fontSize: 24),
-                                        ),
-                                        SizedBox(width: 8),
-                                        Text(
-                                          'Costa Rica',
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                            fontSize: 24,
-                                            fontWeight: FontWeight.w800,
-                                            letterSpacing: 0.8,
-                                            color: Colors.white,
-                                            shadows: <Shadow>[
-                                              Shadow(
-                                                color: Colors.black,
-                                                blurRadius: 6,
-                                                offset: Offset(0, 2),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        SizedBox(width: 8),
-                                        Text(
-                                          '🇨🇷',
-                                          style: TextStyle(fontSize: 24),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              SizedBox(height: compact ? 14 : 18),
+                                SizedBox(height: compact ? 14 : 18),
                                 Expanded(child: _buildImageSlider()),
                                 const SizedBox(height: 14),
                                 _buildBottomPanel(
@@ -578,5 +569,83 @@ class _RadioHomePageState extends State<RadioHomePage> {
         child: FaIcon(icon, color: iconColor, size: 28),
       ),
     );
+  }
+}
+
+class RadioAudioHandler extends BaseAudioHandler with SeekHandler {
+  RadioAudioHandler() {
+    _player.playerStateStream.listen((_) => _broadcastState());
+    _player.playbackEventStream.listen((_) => _broadcastState());
+    mediaItem.add(
+      MediaItem(
+        id: _streamUrl,
+        title: _stationName,
+        artist: _stationSubtitle,
+        album: 'Transmision en vivo',
+        artUri: Uri.parse(_notificationArtworkUrl),
+      ),
+    );
+  }
+
+  final AudioPlayer _player = AudioPlayer();
+  bool _isPrepared = false;
+
+  AudioPlayer get player => _player;
+
+  @override
+  Future<void> prepare() => _ensurePrepared();
+
+  Future<void> _ensurePrepared() async {
+    if (_isPrepared) return;
+    await _player.setAudioSource(AudioSource.uri(Uri.parse(_streamUrl)));
+    _isPrepared = true;
+    _broadcastState();
+  }
+
+  AudioProcessingState _mapState(ProcessingState state) {
+    switch (state) {
+      case ProcessingState.idle:
+        return AudioProcessingState.idle;
+      case ProcessingState.loading:
+        return AudioProcessingState.loading;
+      case ProcessingState.buffering:
+        return AudioProcessingState.buffering;
+      case ProcessingState.ready:
+        return AudioProcessingState.ready;
+      case ProcessingState.completed:
+        return AudioProcessingState.completed;
+    }
+  }
+
+  void _broadcastState() {
+    playbackState.add(
+      PlaybackState(
+        controls: const <MediaControl>[MediaControl.play, MediaControl.stop],
+        androidCompactActionIndices: const <int>[0, 1],
+        processingState: _mapState(_player.processingState),
+        playing: _player.playing,
+        updatePosition: _player.position,
+        bufferedPosition: _player.bufferedPosition,
+        speed: _player.speed,
+        queueIndex: 0,
+      ),
+    );
+  }
+
+  @override
+  Future<void> play() async {
+    await _ensurePrepared();
+    await _player.play();
+    _broadcastState();
+  }
+
+  @override
+  Future<void> pause() => stop();
+
+  @override
+  Future<void> stop() async {
+    await _player.stop();
+    _broadcastState();
+    await super.stop();
   }
 }
