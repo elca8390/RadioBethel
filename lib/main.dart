@@ -6,8 +6,6 @@ import 'package:just_audio_background/just_audio_background.dart';
 const String _stationName = 'Radio Bethel Costa Rica';
 const String _stationSubtitle = 'Emisora Cristiana';
 const String _streamUrl = 'http://51.222.154.65:8186/stream';
-const String _sloganTop = 'Musica que transforma';
-const String _sloganBottom = 'Vive la experiencia Bethel';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -139,27 +137,6 @@ class _RadioHomePageState extends State<RadioHomePage> {
     _changeVolume(0);
   }
 
-  String _statusLabel(ProcessingState processingState, bool isPlaying) {
-    if (_errorMessage != null) {
-      return _errorMessage!;
-    }
-
-    switch (processingState) {
-      case ProcessingState.idle:
-        return _isInitializing
-            ? 'Preparando senal...'
-            : 'Listo para reproducir';
-      case ProcessingState.loading:
-        return 'Conectando con la emisora...';
-      case ProcessingState.buffering:
-        return 'Cargando audio...';
-      case ProcessingState.ready:
-        return isPlaying ? 'En vivo' : 'Detenido';
-      case ProcessingState.completed:
-        return 'Transmision finalizada';
-    }
-  }
-
   @override
   void dispose() {
     _player.dispose();
@@ -201,7 +178,7 @@ class _RadioHomePageState extends State<RadioHomePage> {
               builder: (BuildContext context, BoxConstraints constraints) {
                 final bool compact =
                     constraints.maxHeight < 760 || constraints.maxWidth < 380;
-                final double titleSize = compact ? 64 : 76;
+                final double titleSize = compact ? 48 : 58;
 
                 return StreamBuilder<PlayerState>(
                   stream: _player.playerStateStream,
@@ -229,8 +206,19 @@ class _RadioHomePageState extends State<RadioHomePage> {
                             children: <Widget>[
                               _buildTopBar(),
                               const Spacer(),
+                              const Text(
+                                'EMISORA CRISTIANA',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 21,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 1.2,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
                               Text(
-                                'Bethel',
+                                'Radio Bethel',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: titleSize,
@@ -249,43 +237,21 @@ class _RadioHomePageState extends State<RadioHomePage> {
                                   ],
                                 ),
                               ),
-                              const SizedBox(height: 2),
                               const Text(
-                                'EMISORA CRISTIANA',
+                                'Costa Rica',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  fontSize: 21,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 1.2,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.8,
                                   color: Colors.white,
                                 ),
                               ),
                               SizedBox(height: compact ? 28 : 34),
-                              const Text(
-                                _sloganTop,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                  fontStyle: FontStyle.italic,
-                                  color: Colors.white,
-                                  shadows: <Shadow>[
-                                    Shadow(
-                                      color: Color(0xAA000000),
-                                      blurRadius: 8,
-                                      offset: Offset(0, 1),
-                                    ),
-                                  ],
-                                ),
-                              ),
                               const Spacer(),
                               _buildBottomPanel(
                                 isPlaying: isPlaying,
                                 isBusy: isBusy,
-                                status: _statusLabel(
-                                  processingState,
-                                  isPlaying,
-                                ),
                               ),
                             ],
                           ),
@@ -330,7 +296,6 @@ class _RadioHomePageState extends State<RadioHomePage> {
   Widget _buildBottomPanel({
     required bool isPlaying,
     required bool isBusy,
-    required String status,
   }) {
     return Container(
       width: double.infinity,
@@ -348,19 +313,23 @@ class _RadioHomePageState extends State<RadioHomePage> {
             children: <Widget>[
               _buildSmallControl(
                 icon: FontAwesomeIcons.whatsapp,
+                iconColor: const Color(0xFF25D366),
                 onTap: () {},
               ),
               _buildSmallControl(
                 icon: FontAwesomeIcons.handHoldingHeart,
+                iconColor: const Color(0xFFFFC107),
                 onTap: () {},
               ),
               _buildMainControl(isPlaying: isPlaying, isBusy: isBusy),
               _buildSmallControl(
                 icon: FontAwesomeIcons.facebookF,
+                iconColor: const Color(0xFF1877F2),
                 onTap: () {},
               ),
               _buildSmallControl(
                 icon: FontAwesomeIcons.tiktok,
+                iconColor: const Color(0xFFEE1D52),
                 onTap: () {},
               ),
             ],
@@ -389,29 +358,6 @@ class _RadioHomePageState extends State<RadioHomePage> {
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            _sloganBottom,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              fontStyle: FontStyle.italic,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            status,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 16,
-              color: _errorMessage == null
-                  ? Colors.white.withValues(alpha: 0.9)
-                  : const Color(0xFFFFD9DE),
-              fontWeight: FontWeight.w600,
-            ),
           ),
         ],
       ),
@@ -457,20 +403,28 @@ class _RadioHomePageState extends State<RadioHomePage> {
 
   Widget _buildSmallControl({
     required IconData icon,
+    required Color iconColor,
     required VoidCallback onTap,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 44,
-        height: 44,
+        width: 56,
+        height: 56,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.17),
+          color: Colors.black.withValues(alpha: 0.38),
           shape: BoxShape.circle,
-          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.45)),
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.22),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
-        child: FaIcon(icon, color: Colors.white, size: 20),
+        child: FaIcon(icon, color: iconColor, size: 28),
       ),
     );
   }
