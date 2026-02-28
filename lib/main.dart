@@ -1,8 +1,11 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_image_slideshow/flutter_image_slideshow.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 const String _stationName = 'Radio Bethel Costa Rica';
 const String _stationSubtitle = 'Emisora Cristiana';
@@ -58,6 +61,7 @@ class RadioHomePage extends StatefulWidget {
 
 class _RadioHomePageState extends State<RadioHomePage> {
   final AudioPlayer _player = AudioPlayer();
+  static final Uri _websiteUri = Uri.parse('https://www.radiobethelcr.com');
 
   bool _isInitializing = true;
   String? _errorMessage;
@@ -143,6 +147,10 @@ class _RadioHomePageState extends State<RadioHomePage> {
     _changeVolume(0);
   }
 
+  Future<void> _openWebsite() async {
+    await launchUrl(_websiteUri, mode: LaunchMode.externalApplication);
+  }
+
   @override
   void dispose() {
     _player.dispose();
@@ -152,123 +160,150 @@ class _RadioHomePageState extends State<RadioHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: <Color>[
-              Color(0xFF06318F),
-              Color(0xFFF6F8FF),
-              Color(0xFFC10D2E),
-              Color(0xFFFAFBFF),
-              Color(0xFF062874),
-            ],
-            stops: <double>[0, 0.20, 0.49, 0.72, 1],
-          ),
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: <Color>[
-                Colors.white.withValues(alpha: 0.14),
-                Colors.transparent,
-                Colors.black.withValues(alpha: 0.32),
-              ],
+      body: Stack(
+        children: <Widget>[
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: <Color>[
+                  Color(0xFF0038A8),
+                  Color(0xFF0038A8),
+                  Color(0xFFFFFFFF),
+                  Color(0xFFFFFFFF),
+                  Color(0xFFCE1126),
+                  Color(0xFFCE1126),
+                  Color(0xFFFFFFFF),
+                  Color(0xFFFFFFFF),
+                  Color(0xFF0038A8),
+                  Color(0xFF0038A8),
+                ],
+                stops: <double>[
+                  0.00,
+                  0.16,
+                  0.16,
+                  0.34,
+                  0.34,
+                  0.66,
+                  0.66,
+                  0.84,
+                  0.84,
+                  1.00,
+                ],
+              ),
             ),
           ),
-          child: SafeArea(
-            child: LayoutBuilder(
-              builder: (BuildContext context, BoxConstraints constraints) {
-                final bool compact =
-                    constraints.maxHeight < 760 || constraints.maxWidth < 380;
-                final double titleSize = compact ? 48 : 58;
+          Positioned.fill(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 50.2, sigmaY: 50.2),
+              child: Container(color: Colors.white.withValues(alpha: 0.02)),
+            ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: <Color>[
+                  Colors.white.withValues(alpha: 0.06),
+                  Colors.transparent,
+                  Colors.black.withValues(alpha: 0.12),
+                ],
+              ),
+            ),
+            child: SafeArea(
+              child: LayoutBuilder(
+                builder: (BuildContext context, BoxConstraints constraints) {
+                  final bool compact =
+                      constraints.maxHeight < 760 || constraints.maxWidth < 380;
+                  final double titleSize = compact ? 48 : 58;
 
-                return StreamBuilder<PlayerState>(
-                  stream: _player.playerStateStream,
-                  builder:
-                      (
-                        BuildContext context,
-                        AsyncSnapshot<PlayerState> snapshot,
-                      ) {
-                        final bool isPlaying = snapshot.data?.playing ?? false;
-                        final ProcessingState processingState =
-                            snapshot.data?.processingState ??
-                            ProcessingState.idle;
-                        final bool isBusy =
-                            _isInitializing ||
-                            processingState == ProcessingState.loading ||
-                            processingState == ProcessingState.buffering;
+                  return StreamBuilder<PlayerState>(
+                    stream: _player.playerStateStream,
+                    builder:
+                        (
+                          BuildContext context,
+                          AsyncSnapshot<PlayerState> snapshot,
+                        ) {
+                          final bool isPlaying =
+                              snapshot.data?.playing ?? false;
+                          final ProcessingState processingState =
+                              snapshot.data?.processingState ??
+                              ProcessingState.idle;
+                          final bool isBusy =
+                              _isInitializing ||
+                              processingState == ProcessingState.loading ||
+                              processingState == ProcessingState.buffering;
 
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 14,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: <Widget>[
-                              _buildTopBar(),
-                              const SizedBox(height: 14),
-                              const Text(
-                                'EMISORA CRISTIANA',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 21,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 1.2,
-                                  color: Colors.white,
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 14,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: <Widget>[
+                                _buildTopBar(),
+                                const SizedBox(height: 14),
+                                const Text(
+                                  'EMISORA CRISTIANA',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 21,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 1.2,
+                                    color: Colors.white,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                'Radio Bethel',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: titleSize,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: -1.8,
-                                  fontStyle: FontStyle.italic,
-                                  color: Colors.white,
-                                  shadows: <Shadow>[
-                                    Shadow(
-                                      color: Colors.black.withValues(
-                                        alpha: 0.25,
+                                const SizedBox(height: 6),
+                                Text(
+                                  'Radio Bethel',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: titleSize,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -1.8,
+                                    fontStyle: FontStyle.italic,
+                                    color: Colors.white,
+                                    shadows: <Shadow>[
+                                      Shadow(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.25,
+                                        ),
+                                        blurRadius: 12,
+                                        offset: const Offset(0, 3),
                                       ),
-                                      blurRadius: 12,
-                                      offset: const Offset(0, 3),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              const Text(
-                                'Costa Rica',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 0.8,
-                                  color: Colors.white,
+                                const Text(
+                                  'Costa Rica',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.8,
+                                    color: Colors.white,
+                                  ),
                                 ),
-                              ),
-                              SizedBox(height: compact ? 14 : 18),
-                              Expanded(child: _buildImageSlider()),
-                              const SizedBox(height: 14),
-                              _buildBottomPanel(
-                                isPlaying: isPlaying,
-                                isBusy: isBusy,
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                );
-              },
+                                SizedBox(height: compact ? 14 : 18),
+                                Expanded(child: _buildImageSlider()),
+                                const SizedBox(height: 14),
+                                _buildBottomPanel(
+                                  isPlaying: isPlaying,
+                                  isBusy: isBusy,
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                  );
+                },
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -277,20 +312,22 @@ class _RadioHomePageState extends State<RadioHomePage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: <Widget>[
-        _buildHeaderIcon(Icons.menu_rounded),
-        Row(children: <Widget>[_buildHeaderIcon(Icons.settings_rounded)]),
+        _buildHeaderIcon(Icons.language_rounded, _openWebsite),
+        Row(
+          children: <Widget>[_buildHeaderIcon(Icons.settings_rounded, () {})],
+        ),
       ],
     );
   }
 
-  Widget _buildHeaderIcon(IconData icon) {
+  Widget _buildHeaderIcon(IconData icon, VoidCallback onTap) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(14),
       ),
       child: IconButton(
-        onPressed: () {},
+        onPressed: onTap,
         icon: Icon(icon, color: Colors.white, size: 29),
       ),
     );
