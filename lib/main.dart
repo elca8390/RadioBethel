@@ -98,10 +98,10 @@ class _RadioHomePageState extends State<RadioHomePage> {
     }
   }
 
-  Future<void> _togglePlayPause() async {
+  Future<void> _togglePlayStop() async {
     try {
       if (_player.playing) {
-        await _player.pause();
+        await _player.stop();
         return;
       }
 
@@ -168,7 +168,7 @@ class _RadioHomePageState extends State<RadioHomePage> {
       case ProcessingState.buffering:
         return 'Cargando audio...';
       case ProcessingState.ready:
-        return isPlaying ? 'En vivo' : 'Pausado';
+        return isPlaying ? 'En vivo' : 'Detenido';
       case ProcessingState.completed:
         return 'Transmision finalizada';
     }
@@ -274,12 +274,7 @@ class _RadioHomePageState extends State<RadioHomePage> {
                                   color: Colors.white,
                                 ),
                               ),
-                              SizedBox(height: compact ? 22 : 28),
-                              _buildPrimaryActionButton(
-                                isPlaying: isPlaying,
-                                isBusy: isBusy,
-                              ),
-                              const SizedBox(height: 20),
+                              SizedBox(height: compact ? 28 : 34),
                               const Text(
                                 _sloganTop,
                                 textAlign: TextAlign.center,
@@ -326,8 +321,6 @@ class _RadioHomePageState extends State<RadioHomePage> {
         _buildHeaderIcon(Icons.menu_rounded),
         Row(
           children: <Widget>[
-            _buildHeaderIcon(Icons.search_rounded),
-            const SizedBox(width: 8),
             _buildHeaderIcon(Icons.settings_rounded),
           ],
         ),
@@ -344,40 +337,6 @@ class _RadioHomePageState extends State<RadioHomePage> {
       child: IconButton(
         onPressed: () {},
         icon: Icon(icon, color: Colors.white, size: 29),
-      ),
-    );
-  }
-
-  Widget _buildPrimaryActionButton({
-    required bool isPlaying,
-    required bool isBusy,
-  }) {
-    return GestureDetector(
-      onTap: isBusy ? null : _togglePlayPause,
-      child: Container(
-        width: 112,
-        height: 112,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white, width: 3),
-          color: Colors.white.withValues(alpha: 0.16),
-        ),
-        child: Center(
-          child: isBusy
-              ? const SizedBox(
-                  width: 28,
-                  height: 28,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 3,
-                    color: Colors.white,
-                  ),
-                )
-              : Icon(
-                  isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                  color: Colors.white,
-                  size: 62,
-                ),
-        ),
       ),
     );
   }
@@ -402,15 +361,7 @@ class _RadioHomePageState extends State<RadioHomePage> {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[
               _buildSmallControl(icon: Icons.music_note_rounded, onTap: () {}),
-              _buildSmallControl(
-                icon: Icons.skip_previous_rounded,
-                onTap: _reconnectAndPlay,
-              ),
               _buildMainControl(isPlaying: isPlaying, isBusy: isBusy),
-              _buildSmallControl(
-                icon: Icons.skip_next_rounded,
-                onTap: _reconnectAndPlay,
-              ),
               _buildSmallControl(
                 icon: Icons.refresh_rounded,
                 onTap: _reconnectAndPlay,
@@ -487,7 +438,7 @@ class _RadioHomePageState extends State<RadioHomePage> {
             padding: EdgeInsets.zero,
             elevation: 4,
           ),
-          onPressed: isBusy ? null : _togglePlayPause,
+          onPressed: isBusy ? null : _togglePlayStop,
           child: isBusy
               ? const SizedBox(
                   width: 24,
@@ -498,7 +449,7 @@ class _RadioHomePageState extends State<RadioHomePage> {
                   ),
                 )
               : Icon(
-                  isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                  isPlaying ? Icons.stop_rounded : Icons.play_arrow_rounded,
                   color: Colors.white,
                   size: 44,
                 ),
