@@ -70,6 +70,13 @@ class RadioHomePage extends StatefulWidget {
 class _RadioHomePageState extends State<RadioHomePage> {
   AudioPlayer get _player => widget.audioHandler.player;
   static final Uri _websiteUri = Uri.parse('https://www.radiobethelcr.com');
+  static final Uri _donateUri = Uri.parse(
+    'https://www.paypal.com/donate/?hosted_button_id=WYWX63VWWAZLS',
+  );
+  static final Uri _facebookUri = Uri.parse(
+    'https://www.facebook.com/profile.php?id=61584990081292',
+  );
+  static final Uri _tiktokUri = Uri.parse('https://www.tiktok.com/@radiobethelcr');
 
   bool _isInitializing = true;
   String? _errorMessage;
@@ -147,6 +154,18 @@ class _RadioHomePageState extends State<RadioHomePage> {
 
   Future<void> _openWebsite() async {
     await launchUrl(_websiteUri, mode: LaunchMode.externalApplication);
+  }
+
+  Future<void> _openDonate() async {
+    await launchUrl(_donateUri, mode: LaunchMode.externalApplication);
+  }
+
+  Future<void> _openFacebook() async {
+    await launchUrl(_facebookUri, mode: LaunchMode.externalApplication);
+  }
+
+  Future<void> _openTikTok() async {
+    await launchUrl(_tiktokUri, mode: LaunchMode.externalApplication);
   }
 
   @override
@@ -349,24 +368,59 @@ class _RadioHomePageState extends State<RadioHomePage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: <Widget>[
-        _buildHeaderIcon(Icons.language_rounded, _openWebsite),
+        _buildHeaderIcon(
+          icon: Icons.language_rounded,
+          label: 'Web',
+          onTap: _openWebsite,
+        ),
         Row(
-          children: <Widget>[_buildHeaderIcon(Icons.settings_rounded, () {})],
+          children: <Widget>[
+            _buildHeaderIcon(
+              icon: Icons.share_rounded,
+              label: 'Compartir',
+              onTap: () {},
+            ),
+            const SizedBox(width: 8),
+            _buildHeaderIcon(
+              icon: Icons.settings_rounded,
+              label: 'Config',
+              onTap: () {},
+            ),
+          ],
         ),
       ],
     );
   }
 
-  Widget _buildHeaderIcon(IconData icon, VoidCallback onTap) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: IconButton(
-        onPressed: onTap,
-        icon: Icon(icon, color: Colors.white, size: 29),
-      ),
+  Widget _buildHeaderIcon({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: IconButton(
+            onPressed: onTap,
+            icon: Icon(icon, color: Colors.white, size: 29),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.3,
+          ),
+        ),
+      ],
     );
   }
 
@@ -461,18 +515,18 @@ class _RadioHomePageState extends State<RadioHomePage> {
               _buildSmallControl(
                 icon: FontAwesomeIcons.handHoldingHeart,
                 iconColor: const Color(0xFFFFC107),
-                onTap: () {},
+                onTap: _openDonate,
               ),
               _buildMainControl(isPlaying: isPlaying, isBusy: isBusy),
               _buildSmallControl(
                 icon: FontAwesomeIcons.facebookF,
                 iconColor: const Color(0xFF1877F2),
-                onTap: () {},
+                onTap: _openFacebook,
               ),
               _buildSmallControl(
                 icon: FontAwesomeIcons.tiktok,
                 iconColor: const Color(0xFFEE1D52),
-                onTap: () {},
+                onTap: _openTikTok,
               ),
             ],
           ),
