@@ -155,19 +155,19 @@ class _RadioHomePageState extends State<RadioHomePage> {
 
   bool get _isDarkMode => Theme.of(context).brightness == Brightness.dark;
   Color get _primaryTextColor =>
-      _isDarkMode ? Colors.white : const Color(0xFF0B1F4B);
+      _isDarkMode ? Colors.white : const Color(0xFF1A3765);
   Color get _headerChipColor => _isDarkMode
       ? Colors.black.withValues(alpha: 0.12)
-      : Colors.white.withValues(alpha: 0.82);
+      : Colors.white.withValues(alpha: 0.90);
   Color get _contentCardColor => _isDarkMode
       ? Colors.black.withValues(alpha: 0.22)
-      : Colors.white.withValues(alpha: 0.68);
+      : Colors.white.withValues(alpha: 0.82);
   Color get _panelBgColor => _isDarkMode
       ? Colors.black.withValues(alpha: 0.24)
-      : Colors.white.withValues(alpha: 0.70);
+      : Colors.white.withValues(alpha: 0.86);
   Color get _panelBorderColor => _isDarkMode
       ? Colors.white.withValues(alpha: 0.2)
-      : Colors.black.withValues(alpha: 0.12);
+      : Colors.black.withValues(alpha: 0.08);
 
   @override
   void initState() {
@@ -263,7 +263,7 @@ class _RadioHomePageState extends State<RadioHomePage> {
       context: context,
       backgroundColor: _isDarkMode
           ? Colors.black.withValues(alpha: 0.92)
-          : Colors.white.withValues(alpha: 0.98),
+          : Colors.white.withValues(alpha: 1),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
@@ -348,7 +348,7 @@ class _RadioHomePageState extends State<RadioHomePage> {
               child: Container(
                 color: _isDarkMode
                     ? Colors.white.withValues(alpha: 0.02)
-                    : Colors.white.withValues(alpha: 0.09),
+                    : Colors.white.withValues(alpha: 0.14),
               ),
             ),
           ),
@@ -360,11 +360,11 @@ class _RadioHomePageState extends State<RadioHomePage> {
                 colors: <Color>[
                   _isDarkMode
                       ? Colors.white.withValues(alpha: 0.06)
-                      : Colors.white.withValues(alpha: 0.24),
+                      : Colors.white.withValues(alpha: 0.16),
                   Colors.transparent,
                   _isDarkMode
                       ? Colors.black.withValues(alpha: 0.12)
-                      : Colors.white.withValues(alpha: 0.04),
+                      : Colors.white.withValues(alpha: 0.01),
                 ],
               ),
             ),
@@ -590,11 +590,11 @@ class _RadioHomePageState extends State<RadioHomePage> {
         border: Border.all(
           color: _isDarkMode
               ? Colors.white.withValues(alpha: 0.35)
-              : Colors.black.withValues(alpha: 0.10),
+              : Colors.black.withValues(alpha: 0.06),
         ),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.22),
+            color: Colors.black.withValues(alpha: _isDarkMode ? 0.22 : 0.10),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -610,7 +610,7 @@ class _RadioHomePageState extends State<RadioHomePage> {
           indicatorColor: const Color(0xFFE02448),
           indicatorBackgroundColor: _isDarkMode
               ? Colors.white.withValues(alpha: 0.6)
-              : Colors.black.withValues(alpha: 0.18),
+              : Colors.black.withValues(alpha: 0.12),
           children: _sliderImages
               .map(
                 (String url) => FadeInImage.assetNetwork(
@@ -619,11 +619,15 @@ class _RadioHomePageState extends State<RadioHomePage> {
                   imageErrorBuilder:
                       (BuildContext context, Object error, StackTrace? _) {
                         return Container(
-                          color: Colors.black.withValues(alpha: 0.3),
+                          color: _isDarkMode
+                              ? Colors.black.withValues(alpha: 0.3)
+                              : Colors.white.withValues(alpha: 0.86),
                           alignment: Alignment.center,
-                          child: const Icon(
+                          child: Icon(
                             Icons.image_not_supported_rounded,
-                            color: Colors.black54,
+                            color: _isDarkMode
+                                ? Colors.white70
+                                : Colors.black54,
                             size: 38,
                           ),
                         );
@@ -760,16 +764,16 @@ class _RadioHomePageState extends State<RadioHomePage> {
         decoration: BoxDecoration(
           color: _isDarkMode
               ? Colors.black.withValues(alpha: 0.38)
-              : Colors.white.withValues(alpha: 0.78),
+              : const Color(0xFFE7EDF8),
           shape: BoxShape.circle,
           border: Border.all(
             color: _isDarkMode
                 ? Colors.white.withValues(alpha: 0.45)
-                : Colors.black.withValues(alpha: 0.10),
+                : Colors.black.withValues(alpha: 0.12),
           ),
           boxShadow: <BoxShadow>[
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.22),
+              color: Colors.black.withValues(alpha: _isDarkMode ? 0.22 : 0.08),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
