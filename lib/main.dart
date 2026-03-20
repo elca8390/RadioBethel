@@ -15,9 +15,9 @@ const String _notificationArtworkUrl =
 const String _flagCr = '\u{1F1E8}\u{1F1F7}';
 
 const List<String> _sliderImages = <String>[
-  'https://images.unsplash.com/photo-1504052434569-70ad5836ab65?auto=format&fit=crop&w=1200&q=80',
-  'https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=1200&q=80',
-  'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=1200&q=80',
+  'https://radio.ecoingenieria.co/bethelCR/Imagen%201.jpeg',
+  'https://radio.ecoingenieria.co/bethelCR/Imagen%202.jpeg',
+  'https://radio.ecoingenieria.co/bethelCR/Imagen%203.jpeg',
 ];
 
 Future<void> main() async {
@@ -26,7 +26,7 @@ Future<void> main() async {
   final AudioHandler handler = await AudioService.init(
     builder: () => RadioAudioHandler(),
     config: const AudioServiceConfig(
-      androidNotificationChannelId: 'com.example.radiobethel.channel.audio',
+      androidNotificationChannelId: 'co.ecoingenieria.radiobethelcr.channel.audio',
       androidNotificationChannelName: 'Radio Bethel',
       androidNotificationOngoing: true,
       androidNotificationIcon: 'mipmap/ic_launcher',
@@ -70,6 +70,7 @@ class RadioHomePage extends StatefulWidget {
 class _RadioHomePageState extends State<RadioHomePage> {
   AudioPlayer get _player => widget.audioHandler.player;
   static final Uri _websiteUri = Uri.parse('https://www.radiobethelcr.com');
+  static final Uri _whatsAppUri = Uri.parse('https://wa.me/50670891457');
   static final Uri _donateUri = Uri.parse(
     'https://www.paypal.com/donate/?hosted_button_id=WYWX63VWWAZLS',
   );
@@ -154,6 +155,10 @@ class _RadioHomePageState extends State<RadioHomePage> {
 
   Future<void> _openWebsite() async {
     await launchUrl(_websiteUri, mode: LaunchMode.externalApplication);
+  }
+
+  Future<void> _openWhatsApp() async {
+    await launchUrl(_whatsAppUri, mode: LaunchMode.externalApplication);
   }
 
   Future<void> _openDonate() async {
@@ -450,31 +455,12 @@ class _RadioHomePageState extends State<RadioHomePage> {
           indicatorBackgroundColor: Colors.white.withValues(alpha: 0.6),
           children: _sliderImages
               .map(
-                (String url) => Image.network(
-                  url,
-                  fit: BoxFit.cover,
-                  loadingBuilder:
-                      (
-                        BuildContext context,
-                        Widget child,
-                        ImageChunkEvent? loadingProgress,
-                      ) {
-                        if (loadingProgress == null) {
-                          return child;
-                        }
-                        return Container(
-                          color: Colors.black.withValues(alpha: 0.25),
-                          child: const Center(
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2.4,
-                            ),
-                          ),
-                        );
-                      },
-                  errorBuilder:
+                (String url) => FadeInImage.assetNetwork(
+                  placeholder: 'assets/images/fadein_placeholder.jpg',
+                  image: url,
+                  imageErrorBuilder:
                       (BuildContext context, Object error, StackTrace? _) {
-                        return Container(
+                    return Container(
                           color: Colors.black.withValues(alpha: 0.3),
                           alignment: Alignment.center,
                           child: const Icon(
@@ -484,6 +470,9 @@ class _RadioHomePageState extends State<RadioHomePage> {
                           ),
                         );
                       },
+                  fit: BoxFit.cover,
+                  fadeInDuration: const Duration(milliseconds: 350),
+                  fadeOutDuration: const Duration(milliseconds: 180),
                 ),
               )
               .toList(),
@@ -510,7 +499,7 @@ class _RadioHomePageState extends State<RadioHomePage> {
               _buildSmallControl(
                 icon: FontAwesomeIcons.whatsapp,
                 iconColor: const Color(0xFF25D366),
-                onTap: () {},
+                onTap: _openWhatsApp,
               ),
               _buildSmallControl(
                 icon: FontAwesomeIcons.handHoldingHeart,

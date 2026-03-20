@@ -1,4 +1,4 @@
-package com.example.radiobethel
+package co.ecoingenieria.radiobethelcr
 
 import com.ryanheise.audioservice.AudioServiceActivity
 
