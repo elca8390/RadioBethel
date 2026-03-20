@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_image_slideshow/flutter_image_slideshow.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 const String _stationName = 'Radio Bethel Costa Rica';
@@ -13,6 +14,7 @@ const String _streamUrl = 'http://51.222.154.65:8186/stream';
 const String _notificationArtworkUrl =
     'https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=1000&q=80';
 const String _flagCr = '\u{1F1E8}\u{1F1F7}';
+const String _themeModeKey = 'theme_mode';
 
 const List<String> _sliderImages = <String>[
   'https://radio.ecoingenieria.co/bethelCR/Imagen%201.jpeg',
@@ -26,7 +28,8 @@ Future<void> main() async {
   final AudioHandler handler = await AudioService.init(
     builder: () => RadioAudioHandler(),
     config: const AudioServiceConfig(
-      androidNotificationChannelId: 'co.ecoingenieria.radiobethelcr.channel.audio',
+      androidNotificationChannelId:
+          'co.ecoingenieria.radiobethelcr.channel.audio',
       androidNotificationChannelName: 'Radio Bethel',
       androidNotificationOngoing: true,
       androidNotificationIcon: 'mipmap/ic_launcher',
@@ -36,32 +39,96 @@ Future<void> main() async {
   runApp(RadioBethelApp(audioHandler: handler as RadioAudioHandler));
 }
 
-class RadioBethelApp extends StatelessWidget {
+class RadioBethelApp extends StatefulWidget {
   const RadioBethelApp({required this.audioHandler, super.key});
 
   final RadioAudioHandler audioHandler;
+
+  @override
+  State<RadioBethelApp> createState() => _RadioBethelAppState();
+}
+
+class _RadioBethelAppState extends State<RadioBethelApp> {
+  ThemeMode _themeMode = ThemeMode.dark;
+  bool _prefsAvailable = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadThemeMode();
+  }
+
+  Future<void> _loadThemeMode() async {
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final String savedMode = prefs.getString(_themeModeKey) ?? 'dark';
+      if (!mounted) return;
+      setState(() {
+        _themeMode = savedMode == 'light' ? ThemeMode.light : ThemeMode.dark;
+      });
+    } catch (e) {
+      _prefsAvailable = false;
+      debugPrint('No se pudo leer SharedPreferences: $e');
+    }
+  }
+
+  Future<void> _setThemeMode(ThemeMode mode) async {
+    setState(() {
+      _themeMode = mode;
+    });
+    if (!_prefsAvailable) return;
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        _themeModeKey,
+        mode == ThemeMode.light ? 'light' : 'dark',
+      );
+    } catch (e) {
+      _prefsAvailable = false;
+      debugPrint('No se pudo guardar SharedPreferences: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: _stationName,
+      themeMode: _themeMode,
       theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF0A2A87),
+          brightness: Brightness.light,
+        ),
+      ),
+      darkTheme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF0A2A87),
           brightness: Brightness.dark,
         ),
       ),
-      home: RadioHomePage(audioHandler: audioHandler),
+      home: RadioHomePage(
+        audioHandler: widget.audioHandler,
+        selectedThemeMode: _themeMode,
+        onThemeSelected: _setThemeMode,
+      ),
     );
   }
 }
 
 class RadioHomePage extends StatefulWidget {
-  const RadioHomePage({required this.audioHandler, super.key});
+  const RadioHomePage({
+    required this.audioHandler,
+    required this.selectedThemeMode,
+    required this.onThemeSelected,
+    super.key,
+  });
 
   final RadioAudioHandler audioHandler;
+  final ThemeMode selectedThemeMode;
+  final ValueChanged<ThemeMode> onThemeSelected;
 
   @override
   State<RadioHomePage> createState() => _RadioHomePageState();
@@ -77,12 +144,30 @@ class _RadioHomePageState extends State<RadioHomePage> {
   static final Uri _facebookUri = Uri.parse(
     'https://www.facebook.com/profile.php?id=61584990081292',
   );
-  static final Uri _tiktokUri = Uri.parse('https://www.tiktok.com/@radiobethelcr');
+  static final Uri _tiktokUri = Uri.parse(
+    'https://www.tiktok.com/@radiobethelcr',
+  );
 
   bool _isInitializing = true;
   String? _errorMessage;
   double _volume = 0.85;
   double _lastVolume = 0.85;
+
+  bool get _isDarkMode => Theme.of(context).brightness == Brightness.dark;
+  Color get _primaryTextColor =>
+      _isDarkMode ? Colors.white : const Color(0xFF0B1F4B);
+  Color get _headerChipColor => _isDarkMode
+      ? Colors.black.withValues(alpha: 0.12)
+      : Colors.white.withValues(alpha: 0.82);
+  Color get _contentCardColor => _isDarkMode
+      ? Colors.black.withValues(alpha: 0.22)
+      : Colors.white.withValues(alpha: 0.68);
+  Color get _panelBgColor => _isDarkMode
+      ? Colors.black.withValues(alpha: 0.24)
+      : Colors.white.withValues(alpha: 0.70);
+  Color get _panelBorderColor => _isDarkMode
+      ? Colors.white.withValues(alpha: 0.2)
+      : Colors.black.withValues(alpha: 0.12);
 
   @override
   void initState() {
@@ -173,6 +258,53 @@ class _RadioHomePageState extends State<RadioHomePage> {
     await launchUrl(_tiktokUri, mode: LaunchMode.externalApplication);
   }
 
+  Future<void> _openThemeSelector() async {
+    final ThemeMode? selected = await showModalBottomSheet<ThemeMode>(
+      context: context,
+      backgroundColor: _isDarkMode
+          ? Colors.black.withValues(alpha: 0.92)
+          : Colors.white.withValues(alpha: 0.98),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                leading: Icon(Icons.dark_mode, color: _primaryTextColor),
+                title: Text(
+                  'Modo oscuro',
+                  style: TextStyle(color: _primaryTextColor),
+                ),
+                trailing: widget.selectedThemeMode == ThemeMode.dark
+                    ? Icon(Icons.check, color: _primaryTextColor)
+                    : null,
+                onTap: () => Navigator.of(context).pop(ThemeMode.dark),
+              ),
+              ListTile(
+                leading: Icon(Icons.light_mode, color: _primaryTextColor),
+                title: Text(
+                  'Modo claro',
+                  style: TextStyle(color: _primaryTextColor),
+                ),
+                trailing: widget.selectedThemeMode == ThemeMode.light
+                    ? Icon(Icons.check, color: _primaryTextColor)
+                    : null,
+                onTap: () => Navigator.of(context).pop(ThemeMode.light),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (selected != null) {
+      widget.onThemeSelected(selected);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -213,7 +345,11 @@ class _RadioHomePageState extends State<RadioHomePage> {
           Positioned.fill(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 50.2, sigmaY: 50.2),
-              child: Container(color: Colors.white.withValues(alpha: 0.02)),
+              child: Container(
+                color: _isDarkMode
+                    ? Colors.white.withValues(alpha: 0.02)
+                    : Colors.white.withValues(alpha: 0.09),
+              ),
             ),
           ),
           Container(
@@ -222,9 +358,13 @@ class _RadioHomePageState extends State<RadioHomePage> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: <Color>[
-                  Colors.white.withValues(alpha: 0.06),
+                  _isDarkMode
+                      ? Colors.white.withValues(alpha: 0.06)
+                      : Colors.white.withValues(alpha: 0.24),
                   Colors.transparent,
-                  Colors.black.withValues(alpha: 0.12),
+                  _isDarkMode
+                      ? Colors.black.withValues(alpha: 0.12)
+                      : Colors.white.withValues(alpha: 0.04),
                 ],
               ),
             ),
@@ -268,22 +408,26 @@ class _RadioHomePageState extends State<RadioHomePage> {
                                     vertical: 10,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.22),
+                                    color: _contentCardColor,
                                     borderRadius: BorderRadius.circular(16),
                                   ),
                                   child: Column(
                                     children: <Widget>[
-                                      const Text(
+                                      Text(
                                         'EMISORA CRISTIANA',
                                         textAlign: TextAlign.center,
                                         style: TextStyle(
                                           fontSize: 21,
                                           fontWeight: FontWeight.w700,
                                           letterSpacing: 1.2,
-                                          color: Colors.white,
+                                          color: _primaryTextColor,
                                           shadows: <Shadow>[
                                             Shadow(
-                                              color: Colors.black,
+                                              color: _isDarkMode
+                                                  ? Colors.black
+                                                  : Colors.white.withValues(
+                                                      alpha: 0.85,
+                                                    ),
                                               blurRadius: 6,
                                               offset: Offset(0, 2),
                                             ),
@@ -299,12 +443,16 @@ class _RadioHomePageState extends State<RadioHomePage> {
                                           fontWeight: FontWeight.w800,
                                           letterSpacing: -1.4,
                                           fontStyle: FontStyle.italic,
-                                          color: Colors.white,
+                                          color: _primaryTextColor,
                                           shadows: <Shadow>[
                                             Shadow(
-                                              color: Colors.black.withValues(
-                                                alpha: 0.42,
-                                              ),
+                                              color: _isDarkMode
+                                                  ? Colors.black.withValues(
+                                                      alpha: 0.42,
+                                                    )
+                                                  : Colors.white.withValues(
+                                                      alpha: 0.95,
+                                                    ),
                                               blurRadius: 14,
                                               offset: const Offset(0, 4),
                                             ),
@@ -312,7 +460,7 @@ class _RadioHomePageState extends State<RadioHomePage> {
                                         ),
                                       ),
                                       const SizedBox(height: 2),
-                                      const Row(
+                                      Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.center,
                                         children: <Widget>[
@@ -328,10 +476,14 @@ class _RadioHomePageState extends State<RadioHomePage> {
                                               fontSize: 24,
                                               fontWeight: FontWeight.w800,
                                               letterSpacing: 0.8,
-                                              color: Colors.white,
+                                              color: _primaryTextColor,
                                               shadows: <Shadow>[
                                                 Shadow(
-                                                  color: Colors.black,
+                                                  color: _isDarkMode
+                                                      ? Colors.black
+                                                      : Colors.white.withValues(
+                                                          alpha: 0.85,
+                                                        ),
                                                   blurRadius: 6,
                                                   offset: Offset(0, 2),
                                                 ),
@@ -389,7 +541,7 @@ class _RadioHomePageState extends State<RadioHomePage> {
             _buildHeaderIcon(
               icon: Icons.settings_rounded,
               label: 'Config',
-              onTap: () {},
+              onTap: _openThemeSelector,
             ),
           ],
         ),
@@ -407,19 +559,19 @@ class _RadioHomePageState extends State<RadioHomePage> {
       children: <Widget>[
         Container(
           decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.12),
+            color: _headerChipColor,
             borderRadius: BorderRadius.circular(14),
           ),
           child: IconButton(
             onPressed: onTap,
-            icon: Icon(icon, color: Colors.white, size: 29),
+            icon: Icon(icon, color: _primaryTextColor, size: 29),
           ),
         ),
         const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: _primaryTextColor,
             fontSize: 12,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.3,
@@ -435,7 +587,11 @@ class _RadioHomePageState extends State<RadioHomePage> {
       height: double.infinity,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
+        border: Border.all(
+          color: _isDarkMode
+              ? Colors.white.withValues(alpha: 0.35)
+              : Colors.black.withValues(alpha: 0.10),
+        ),
         boxShadow: <BoxShadow>[
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.22),
@@ -452,7 +608,9 @@ class _RadioHomePageState extends State<RadioHomePage> {
           autoPlayInterval: 4000,
           isLoop: true,
           indicatorColor: const Color(0xFFE02448),
-          indicatorBackgroundColor: Colors.white.withValues(alpha: 0.6),
+          indicatorBackgroundColor: _isDarkMode
+              ? Colors.white.withValues(alpha: 0.6)
+              : Colors.black.withValues(alpha: 0.18),
           children: _sliderImages
               .map(
                 (String url) => FadeInImage.assetNetwork(
@@ -460,12 +618,12 @@ class _RadioHomePageState extends State<RadioHomePage> {
                   image: url,
                   imageErrorBuilder:
                       (BuildContext context, Object error, StackTrace? _) {
-                    return Container(
+                        return Container(
                           color: Colors.black.withValues(alpha: 0.3),
                           alignment: Alignment.center,
                           child: const Icon(
                             Icons.image_not_supported_rounded,
-                            color: Colors.white70,
+                            color: Colors.black54,
                             size: 38,
                           ),
                         );
@@ -487,8 +645,8 @@ class _RadioHomePageState extends State<RadioHomePage> {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(34),
-        color: Colors.black.withValues(alpha: 0.24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+        color: _panelBgColor,
+        border: Border.all(color: _panelBorderColor),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -528,14 +686,16 @@ class _RadioHomePageState extends State<RadioHomePage> {
                   _volume == 0
                       ? Icons.volume_off_rounded
                       : Icons.volume_up_rounded,
-                  color: Colors.white,
+                  color: _primaryTextColor,
                 ),
               ),
               Expanded(
                 child: SliderTheme(
                   data: SliderTheme.of(context).copyWith(
                     activeTrackColor: const Color(0xFFE02448),
-                    inactiveTrackColor: Colors.white70,
+                    inactiveTrackColor: _isDarkMode
+                        ? Colors.white70
+                        : Colors.black.withValues(alpha: 0.28),
                     thumbColor: const Color(0xFFE02448),
                     overlayColor: const Color(0x33E02448),
                   ),
@@ -578,7 +738,7 @@ class _RadioHomePageState extends State<RadioHomePage> {
                 )
               : Icon(
                   isPlaying ? Icons.stop_rounded : Icons.play_arrow_rounded,
-                  color: Colors.white,
+                  color: _primaryTextColor,
                   size: 44,
                 ),
         ),
@@ -598,9 +758,15 @@ class _RadioHomePageState extends State<RadioHomePage> {
         height: 56,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.38),
+          color: _isDarkMode
+              ? Colors.black.withValues(alpha: 0.38)
+              : Colors.white.withValues(alpha: 0.78),
           shape: BoxShape.circle,
-          border: Border.all(color: Colors.white.withValues(alpha: 0.45)),
+          border: Border.all(
+            color: _isDarkMode
+                ? Colors.white.withValues(alpha: 0.45)
+                : Colors.black.withValues(alpha: 0.10),
+          ),
           boxShadow: <BoxShadow>[
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.22),
