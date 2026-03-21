@@ -373,7 +373,16 @@ class _RadioHomePageState extends State<RadioHomePage> {
                 builder: (BuildContext context, BoxConstraints constraints) {
                   final bool compact =
                       constraints.maxHeight < 760 || constraints.maxWidth < 380;
-                  final double titleSize = compact ? 48 : 58;
+                  final double scale = (constraints.maxHeight / 860).clamp(
+                    0.74,
+                    1.0,
+                  );
+                  final double titleSize = (compact ? 48 : 58) * scale;
+                  final double sliderHeight =
+                      (constraints.maxHeight * (compact ? 0.24 : 0.30)).clamp(
+                        150.0,
+                        300.0,
+                      );
 
                   return StreamBuilder<PlayerState>(
                     stream: _player.playerStateStream,
@@ -392,90 +401,39 @@ class _RadioHomePageState extends State<RadioHomePage> {
                               processingState == ProcessingState.loading ||
                               processingState == ProcessingState.buffering;
 
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 14,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: <Widget>[
-                                _buildTopBar(),
-                                const SizedBox(height: 14),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: 10,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: _contentCardColor,
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  child: Column(
-                                    children: <Widget>[
-                                      Text(
-                                        'EMISORA CRISTIANA',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontSize: 21,
-                                          fontWeight: FontWeight.w700,
-                                          letterSpacing: 1.2,
-                                          color: _primaryTextColor,
-                                          shadows: <Shadow>[
-                                            Shadow(
-                                              color: _isDarkMode
-                                                  ? Colors.black
-                                                  : Colors.white.withValues(
-                                                      alpha: 0.85,
-                                                    ),
-                                              blurRadius: 6,
-                                              offset: Offset(0, 2),
-                                            ),
-                                          ],
-                                        ),
+                          return SingleChildScrollView(
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                minHeight: constraints.maxHeight,
+                              ),
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 20 * scale,
+                                  vertical: 14 * scale,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: <Widget>[
+                                    _buildTopBar(scale: scale),
+                                    SizedBox(height: 14 * scale),
+                                    Container(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 14 * scale,
+                                        vertical: 10 * scale,
                                       ),
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        'Radio Bethel',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontSize: titleSize,
-                                          fontWeight: FontWeight.w800,
-                                          letterSpacing: -1.4,
-                                          fontStyle: FontStyle.italic,
-                                          color: _primaryTextColor,
-                                          shadows: <Shadow>[
-                                            Shadow(
-                                              color: _isDarkMode
-                                                  ? Colors.black.withValues(
-                                                      alpha: 0.42,
-                                                    )
-                                                  : Colors.white.withValues(
-                                                      alpha: 0.95,
-                                                    ),
-                                              blurRadius: 14,
-                                              offset: const Offset(0, 4),
-                                            ),
-                                          ],
-                                        ),
+                                      decoration: BoxDecoration(
+                                        color: _contentCardColor,
+                                        borderRadius: BorderRadius.circular(16),
                                       ),
-                                      const SizedBox(height: 2),
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
+                                      child: Column(
                                         children: <Widget>[
                                           Text(
-                                            _flagCr,
-                                            style: TextStyle(fontSize: 24),
-                                          ),
-                                          SizedBox(width: 8),
-                                          Text(
-                                            'Costa Rica',
+                                            'EMISORA CRISTIANA',
                                             textAlign: TextAlign.center,
                                             style: TextStyle(
-                                              fontSize: 24,
-                                              fontWeight: FontWeight.w800,
-                                              letterSpacing: 0.8,
+                                              fontSize: 21 * scale,
+                                              fontWeight: FontWeight.w700,
+                                              letterSpacing: 1.2,
                                               color: _primaryTextColor,
                                               shadows: <Shadow>[
                                                 Shadow(
@@ -490,24 +448,93 @@ class _RadioHomePageState extends State<RadioHomePage> {
                                               ],
                                             ),
                                           ),
-                                          SizedBox(width: 8),
+                                          SizedBox(height: 6 * scale),
                                           Text(
-                                            _flagCr,
-                                            style: TextStyle(fontSize: 24),
+                                            'Radio Bethel',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              fontSize: titleSize,
+                                              fontWeight: FontWeight.w800,
+                                              letterSpacing: -1.4,
+                                              fontStyle: FontStyle.italic,
+                                              color: _primaryTextColor,
+                                              shadows: <Shadow>[
+                                                Shadow(
+                                                  color: _isDarkMode
+                                                      ? Colors.black.withValues(
+                                                          alpha: 0.42,
+                                                        )
+                                                      : Colors.white.withValues(
+                                                          alpha: 0.95,
+                                                        ),
+                                                  blurRadius: 14,
+                                                  offset: const Offset(0, 4),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          SizedBox(height: 2 * scale),
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: <Widget>[
+                                              Text(
+                                                _flagCr,
+                                                style: TextStyle(
+                                                  fontSize: 24 * scale,
+                                                ),
+                                              ),
+                                              SizedBox(width: 8 * scale),
+                                              Text(
+                                                'Costa Rica',
+                                                textAlign: TextAlign.center,
+                                                style: TextStyle(
+                                                  fontSize: 24 * scale,
+                                                  fontWeight: FontWeight.w800,
+                                                  letterSpacing: 0.8,
+                                                  color: _primaryTextColor,
+                                                  shadows: <Shadow>[
+                                                    Shadow(
+                                                      color: _isDarkMode
+                                                          ? Colors.black
+                                                          : Colors.white
+                                                                .withValues(
+                                                                  alpha: 0.85,
+                                                                ),
+                                                      blurRadius: 6,
+                                                      offset: Offset(0, 2),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              SizedBox(width: 8 * scale),
+                                              Text(
+                                                _flagCr,
+                                                style: TextStyle(
+                                                  fontSize: 24 * scale,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                    SizedBox(
+                                      height: (compact ? 14 : 18) * scale,
+                                    ),
+                                    SizedBox(
+                                      height: sliderHeight,
+                                      child: _buildImageSlider(),
+                                    ),
+                                    SizedBox(height: 14 * scale),
+                                    _buildBottomPanel(
+                                      isPlaying: isPlaying,
+                                      isBusy: isBusy,
+                                      scale: scale,
+                                    ),
+                                  ],
                                 ),
-                                SizedBox(height: compact ? 14 : 18),
-                                Expanded(child: _buildImageSlider()),
-                                const SizedBox(height: 14),
-                                _buildBottomPanel(
-                                  isPlaying: isPlaying,
-                                  isBusy: isBusy,
-                                ),
-                              ],
+                              ),
                             ),
                           );
                         },
@@ -521,7 +548,7 @@ class _RadioHomePageState extends State<RadioHomePage> {
     );
   }
 
-  Widget _buildTopBar() {
+  Widget _buildTopBar({required double scale}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: <Widget>[
@@ -529,6 +556,7 @@ class _RadioHomePageState extends State<RadioHomePage> {
           icon: Icons.language_rounded,
           label: 'Web',
           onTap: _openWebsite,
+          scale: scale,
         ),
         Row(
           children: <Widget>[
@@ -536,12 +564,14 @@ class _RadioHomePageState extends State<RadioHomePage> {
               icon: Icons.share_rounded,
               label: 'Compartir',
               onTap: () {},
+              scale: scale,
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8 * scale),
             _buildHeaderIcon(
               icon: Icons.settings_rounded,
               label: 'Config',
               onTap: _openThemeSelector,
+              scale: scale,
             ),
           ],
         ),
@@ -553,6 +583,7 @@ class _RadioHomePageState extends State<RadioHomePage> {
     required IconData icon,
     required String label,
     required VoidCallback onTap,
+    required double scale,
   }) {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -560,19 +591,19 @@ class _RadioHomePageState extends State<RadioHomePage> {
         Container(
           decoration: BoxDecoration(
             color: _headerChipColor,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(14 * scale),
           ),
           child: IconButton(
             onPressed: onTap,
-            icon: Icon(icon, color: _primaryTextColor, size: 29),
+            icon: Icon(icon, color: _primaryTextColor, size: 29 * scale),
           ),
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: 4 * scale),
         Text(
           label,
           style: TextStyle(
             color: _primaryTextColor,
-            fontSize: 12,
+            fontSize: 12 * scale,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.3,
           ),
@@ -643,12 +674,21 @@ class _RadioHomePageState extends State<RadioHomePage> {
     );
   }
 
-  Widget _buildBottomPanel({required bool isPlaying, required bool isBusy}) {
+  Widget _buildBottomPanel({
+    required bool isPlaying,
+    required bool isBusy,
+    required double scale,
+  }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+      padding: EdgeInsets.fromLTRB(
+        16 * scale,
+        16 * scale,
+        16 * scale,
+        18 * scale,
+      ),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(34),
+        borderRadius: BorderRadius.circular(34 * scale),
         color: _panelBgColor,
         border: Border.all(color: _panelBorderColor),
       ),
@@ -662,26 +702,34 @@ class _RadioHomePageState extends State<RadioHomePage> {
                 icon: FontAwesomeIcons.whatsapp,
                 iconColor: const Color(0xFF25D366),
                 onTap: _openWhatsApp,
+                scale: scale,
               ),
               _buildSmallControl(
                 icon: FontAwesomeIcons.handHoldingHeart,
                 iconColor: const Color(0xFFFFC107),
                 onTap: _openDonate,
+                scale: scale,
               ),
-              _buildMainControl(isPlaying: isPlaying, isBusy: isBusy),
+              _buildMainControl(
+                isPlaying: isPlaying,
+                isBusy: isBusy,
+                scale: scale,
+              ),
               _buildSmallControl(
                 icon: FontAwesomeIcons.facebookF,
                 iconColor: const Color(0xFF1877F2),
                 onTap: _openFacebook,
+                scale: scale,
               ),
               _buildSmallControl(
                 icon: FontAwesomeIcons.tiktok,
                 iconColor: const Color(0xFFEE1D52),
                 onTap: _openTikTok,
+                scale: scale,
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14 * scale),
           Row(
             children: <Widget>[
               IconButton(
@@ -713,20 +761,24 @@ class _RadioHomePageState extends State<RadioHomePage> {
     );
   }
 
-  Widget _buildMainControl({required bool isPlaying, required bool isBusy}) {
+  Widget _buildMainControl({
+    required bool isPlaying,
+    required bool isBusy,
+    required double scale,
+  }) {
     return Container(
-      width: 108,
-      height: 108,
+      width: 108 * scale,
+      height: 108 * scale,
       decoration: BoxDecoration(
         color: const Color(0x2BFFFFFF),
-        borderRadius: BorderRadius.circular(54),
+        borderRadius: BorderRadius.circular(54 * scale),
       ),
       child: Center(
         child: FilledButton(
           style: FilledButton.styleFrom(
             backgroundColor: const Color(0xFFE02448),
             shape: const CircleBorder(),
-            minimumSize: const Size(82, 82),
+            minimumSize: Size(82 * scale, 82 * scale),
             padding: EdgeInsets.zero,
             elevation: 4,
           ),
@@ -743,7 +795,7 @@ class _RadioHomePageState extends State<RadioHomePage> {
               : Icon(
                   isPlaying ? Icons.stop_rounded : Icons.play_arrow_rounded,
                   color: _primaryTextColor,
-                  size: 44,
+                  size: 44 * scale,
                 ),
         ),
       ),
@@ -754,12 +806,13 @@ class _RadioHomePageState extends State<RadioHomePage> {
     required IconData icon,
     required Color iconColor,
     required VoidCallback onTap,
+    required double scale,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 56,
-        height: 56,
+        width: 56 * scale,
+        height: 56 * scale,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: _isDarkMode
@@ -779,7 +832,7 @@ class _RadioHomePageState extends State<RadioHomePage> {
             ),
           ],
         ),
-        child: FaIcon(icon, color: iconColor, size: 28),
+        child: FaIcon(icon, color: iconColor, size: 28 * scale),
       ),
     );
   }
