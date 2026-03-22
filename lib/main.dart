@@ -2,19 +2,21 @@ import 'dart:ui';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_image_slideshow/flutter_image_slideshow.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 const String _stationName = 'Radio Bethel Costa Rica';
 const String _stationSubtitle = 'Emisora Cristiana';
 const String _streamUrl = 'http://51.222.154.65:8186/stream';
+const String _playStoreUrl =
+    'https://play.google.com/store/apps/details?id=co.ecoingenieria.radiobethelcr';
 const String _notificationArtworkUrl =
     'https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=1000&q=80';
 const String _flagCr = '\u{1F1E8}\u{1F1F7}';
-const String _themeModeKey = 'theme_mode';
 
 const List<String> _sliderImages = <String>[
   'https://radio.ecoingenieria.co/bethelCR/Imagen%201.jpeg',
@@ -39,96 +41,32 @@ Future<void> main() async {
   runApp(RadioBethelApp(audioHandler: handler as RadioAudioHandler));
 }
 
-class RadioBethelApp extends StatefulWidget {
+class RadioBethelApp extends StatelessWidget {
   const RadioBethelApp({required this.audioHandler, super.key});
 
   final RadioAudioHandler audioHandler;
-
-  @override
-  State<RadioBethelApp> createState() => _RadioBethelAppState();
-}
-
-class _RadioBethelAppState extends State<RadioBethelApp> {
-  ThemeMode _themeMode = ThemeMode.dark;
-  bool _prefsAvailable = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadThemeMode();
-  }
-
-  Future<void> _loadThemeMode() async {
-    try {
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      final String savedMode = prefs.getString(_themeModeKey) ?? 'dark';
-      if (!mounted) return;
-      setState(() {
-        _themeMode = savedMode == 'light' ? ThemeMode.light : ThemeMode.dark;
-      });
-    } catch (e) {
-      _prefsAvailable = false;
-      debugPrint('No se pudo leer SharedPreferences: $e');
-    }
-  }
-
-  Future<void> _setThemeMode(ThemeMode mode) async {
-    setState(() {
-      _themeMode = mode;
-    });
-    if (!_prefsAvailable) return;
-    try {
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setString(
-        _themeModeKey,
-        mode == ThemeMode.light ? 'light' : 'dark',
-      );
-    } catch (e) {
-      _prefsAvailable = false;
-      debugPrint('No se pudo guardar SharedPreferences: $e');
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: _stationName,
-      themeMode: _themeMode,
       theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF0A2A87),
-          brightness: Brightness.light,
-        ),
-      ),
-      darkTheme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF0A2A87),
           brightness: Brightness.dark,
         ),
       ),
-      home: RadioHomePage(
-        audioHandler: widget.audioHandler,
-        selectedThemeMode: _themeMode,
-        onThemeSelected: _setThemeMode,
-      ),
+      home: RadioHomePage(audioHandler: audioHandler),
     );
   }
 }
 
 class RadioHomePage extends StatefulWidget {
-  const RadioHomePage({
-    required this.audioHandler,
-    required this.selectedThemeMode,
-    required this.onThemeSelected,
-    super.key,
-  });
+  const RadioHomePage({required this.audioHandler, super.key});
 
   final RadioAudioHandler audioHandler;
-  final ThemeMode selectedThemeMode;
-  final ValueChanged<ThemeMode> onThemeSelected;
 
   @override
   State<RadioHomePage> createState() => _RadioHomePageState();
@@ -258,50 +196,25 @@ class _RadioHomePageState extends State<RadioHomePage> {
     await launchUrl(_tiktokUri, mode: LaunchMode.externalApplication);
   }
 
-  Future<void> _openThemeSelector() async {
-    final ThemeMode? selected = await showModalBottomSheet<ThemeMode>(
-      context: context,
-      backgroundColor: _isDarkMode
-          ? Colors.black.withValues(alpha: 0.92)
-          : Colors.white.withValues(alpha: 1),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
-      builder: (BuildContext context) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              ListTile(
-                leading: Icon(Icons.dark_mode, color: _primaryTextColor),
-                title: Text(
-                  'Modo oscuro',
-                  style: TextStyle(color: _primaryTextColor),
-                ),
-                trailing: widget.selectedThemeMode == ThemeMode.dark
-                    ? Icon(Icons.check, color: _primaryTextColor)
-                    : null,
-                onTap: () => Navigator.of(context).pop(ThemeMode.dark),
-              ),
-              ListTile(
-                leading: Icon(Icons.light_mode, color: _primaryTextColor),
-                title: Text(
-                  'Modo claro',
-                  style: TextStyle(color: _primaryTextColor),
-                ),
-                trailing: widget.selectedThemeMode == ThemeMode.light
-                    ? Icon(Icons.check, color: _primaryTextColor)
-                    : null,
-                onTap: () => Navigator.of(context).pop(ThemeMode.light),
-              ),
-            ],
+  Future<void> _shareApp() async {
+    const String shareText =
+        'Te recomiendo Radio Bethel CR para escuchar la emisora en vivo. '
+        'Descargala aqui:\n$_playStoreUrl';
+    try {
+      await SharePlus.instance.share(
+        ShareParams(text: shareText, subject: 'Descarga Radio Bethel CR'),
+      );
+    } on MissingPluginException {
+      await Clipboard.setData(const ClipboardData(text: shareText));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No se pudieron abrir las opciones de compartir. '
+            'Se copio el mensaje al portapapeles.',
           ),
-        );
-      },
-    );
-
-    if (selected != null) {
-      widget.onThemeSelected(selected);
+        ),
+      );
     }
   }
 
@@ -344,7 +257,7 @@ class _RadioHomePageState extends State<RadioHomePage> {
           ),
           Positioned.fill(
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 50.2, sigmaY: 50.2),
+              filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
               child: Container(
                 color: _isDarkMode
                     ? Colors.white.withValues(alpha: 0.02)
@@ -369,6 +282,7 @@ class _RadioHomePageState extends State<RadioHomePage> {
               ),
             ),
             child: SafeArea(
+              bottom: false,
               child: LayoutBuilder(
                 builder: (BuildContext context, BoxConstraints constraints) {
                   final bool compact =
@@ -378,11 +292,8 @@ class _RadioHomePageState extends State<RadioHomePage> {
                     1.0,
                   );
                   final double titleSize = (compact ? 48 : 58) * scale;
-                  final double sliderHeight =
-                      (constraints.maxHeight * (compact ? 0.24 : 0.30)).clamp(
-                        150.0,
-                        300.0,
-                      );
+                  final double maxSliderWidth =
+                      constraints.maxWidth - (40 * scale);
 
                   return StreamBuilder<PlayerState>(
                     stream: _player.playerStateStream,
@@ -401,140 +312,153 @@ class _RadioHomePageState extends State<RadioHomePage> {
                               processingState == ProcessingState.loading ||
                               processingState == ProcessingState.buffering;
 
-                          return SingleChildScrollView(
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(
-                                minHeight: constraints.maxHeight,
-                              ),
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 20 * scale,
-                                  vertical: 14 * scale,
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: <Widget>[
-                                    _buildTopBar(scale: scale),
-                                    SizedBox(height: 14 * scale),
-                                    Container(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 14 * scale,
-                                        vertical: 10 * scale,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: _contentCardColor,
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      child: Column(
-                                        children: <Widget>[
-                                          Text(
-                                            'EMISORA CRISTIANA',
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                              fontSize: 21 * scale,
-                                              fontWeight: FontWeight.w700,
-                                              letterSpacing: 1.2,
-                                              color: _primaryTextColor,
-                                              shadows: <Shadow>[
-                                                Shadow(
-                                                  color: _isDarkMode
-                                                      ? Colors.black
-                                                      : Colors.white.withValues(
-                                                          alpha: 0.85,
-                                                        ),
-                                                  blurRadius: 6,
-                                                  offset: Offset(0, 2),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          SizedBox(height: 6 * scale),
-                                          Text(
-                                            'Radio Bethel',
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                              fontSize: titleSize,
-                                              fontWeight: FontWeight.w800,
-                                              letterSpacing: -1.4,
-                                              fontStyle: FontStyle.italic,
-                                              color: _primaryTextColor,
-                                              shadows: <Shadow>[
-                                                Shadow(
-                                                  color: _isDarkMode
-                                                      ? Colors.black.withValues(
-                                                          alpha: 0.42,
-                                                        )
-                                                      : Colors.white.withValues(
-                                                          alpha: 0.95,
-                                                        ),
-                                                  blurRadius: 14,
-                                                  offset: const Offset(0, 4),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          SizedBox(height: 2 * scale),
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: <Widget>[
-                                              Text(
-                                                _flagCr,
-                                                style: TextStyle(
-                                                  fontSize: 24 * scale,
-                                                ),
-                                              ),
-                                              SizedBox(width: 8 * scale),
-                                              Text(
-                                                'Costa Rica',
-                                                textAlign: TextAlign.center,
-                                                style: TextStyle(
-                                                  fontSize: 24 * scale,
-                                                  fontWeight: FontWeight.w800,
-                                                  letterSpacing: 0.8,
-                                                  color: _primaryTextColor,
-                                                  shadows: <Shadow>[
-                                                    Shadow(
-                                                      color: _isDarkMode
-                                                          ? Colors.black
-                                                          : Colors.white
-                                                                .withValues(
-                                                                  alpha: 0.85,
-                                                                ),
-                                                      blurRadius: 6,
-                                                      offset: Offset(0, 2),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              SizedBox(width: 8 * scale),
-                                              Text(
-                                                _flagCr,
-                                                style: TextStyle(
-                                                  fontSize: 24 * scale,
-                                                ),
+                          return Padding(
+                            padding: EdgeInsets.only(
+                              left: 20 * scale,
+                              right: 20 * scale,
+                              top: 10 * scale,
+                              bottom: 20,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: <Widget>[
+                                _buildTopBar(scale: scale),
+                                SizedBox(height: 4 * scale),
+                                Flexible(
+                                  flex: 16,
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 10 * scale,
+                                      vertical: 6 * scale,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: _contentCardColor,
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: <Widget>[
+                                        Text(
+                                          'EMISORA CRISTIANA',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 16 * scale,
+                                            fontWeight: FontWeight.w700,
+                                            letterSpacing: 1.2,
+                                            color: _primaryTextColor,
+                                            shadows: <Shadow>[
+                                              Shadow(
+                                                color: _isDarkMode
+                                                    ? Colors.black
+                                                    : Colors.white.withValues(
+                                                        alpha: 0.85,
+                                                      ),
+                                                blurRadius: 6,
+                                                offset: Offset(0, 2),
                                               ),
                                             ],
                                           ),
-                                        ],
-                                      ),
+                                        ),
+                                        SizedBox(height: 2 * scale),
+                                        Text(
+                                          'Radio Bethel',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: titleSize * 0.78,
+                                            fontWeight: FontWeight.w800,
+                                            letterSpacing: -1.4,
+                                            fontStyle: FontStyle.italic,
+                                            color: _primaryTextColor,
+                                            shadows: <Shadow>[
+                                              Shadow(
+                                                color: _isDarkMode
+                                                    ? Colors.black.withValues(
+                                                        alpha: 0.42,
+                                                      )
+                                                    : Colors.white.withValues(
+                                                        alpha: 0.95,
+                                                      ),
+                                                blurRadius: 14,
+                                                offset: const Offset(0, 4),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(height: 0),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: <Widget>[
+                                            Text(
+                                              _flagCr,
+                                              style: TextStyle(
+                                                fontSize: 20 * scale,
+                                              ),
+                                            ),
+                                            SizedBox(width: 6 * scale),
+                                            Text(
+                                              'Costa Rica',
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                fontSize: 17 * scale,
+                                                fontWeight: FontWeight.w800,
+                                                letterSpacing: 0.8,
+                                                color: _primaryTextColor,
+                                                shadows: <Shadow>[
+                                                  Shadow(
+                                                    color: _isDarkMode
+                                                        ? Colors.black
+                                                        : Colors.white
+                                                              .withValues(
+                                                                alpha: 0.85,
+                                                              ),
+                                                    blurRadius: 6,
+                                                    offset: Offset(0, 2),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            SizedBox(width: 6 * scale),
+                                            Text(
+                                              _flagCr,
+                                              style: TextStyle(
+                                                fontSize: 20 * scale,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
-                                    SizedBox(
-                                      height: (compact ? 14 : 18) * scale,
-                                    ),
-                                    SizedBox(
-                                      height: sliderHeight,
-                                      child: _buildImageSlider(),
-                                    ),
-                                    SizedBox(height: 14 * scale),
-                                    _buildBottomPanel(
-                                      isPlaying: isPlaying,
-                                      isBusy: isBusy,
-                                      scale: scale,
-                                    ),
-                                  ],
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(height: 10),
+                                Expanded(
+                                  flex: 42,
+                                  child: LayoutBuilder(
+                                    builder: (
+                                      BuildContext context,
+                                      BoxConstraints box,
+                                    ) {
+                                      final double sliderSize = box.maxHeight
+                                          .clamp(170.0, maxSliderWidth);
+                                      return Center(
+                                        child: SizedBox(
+                                          width: sliderSize,
+                                          height: sliderSize,
+                                          child: _buildImageSlider(),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                _buildBottomPanel(
+                                  isPlaying: isPlaying,
+                                  isBusy: isBusy,
+                                  scale: scale,
+                                ),
+                              ],
                             ),
                           );
                         },
@@ -563,14 +487,7 @@ class _RadioHomePageState extends State<RadioHomePage> {
             _buildHeaderIcon(
               icon: Icons.share_rounded,
               label: 'Compartir',
-              onTap: () {},
-              scale: scale,
-            ),
-            SizedBox(width: 8 * scale),
-            _buildHeaderIcon(
-              icon: Icons.settings_rounded,
-              label: 'Config',
-              onTap: _openThemeSelector,
+              onTap: _shareApp,
               scale: scale,
             ),
           ],
@@ -595,7 +512,7 @@ class _RadioHomePageState extends State<RadioHomePage> {
           ),
           child: IconButton(
             onPressed: onTap,
-            icon: Icon(icon, color: _primaryTextColor, size: 29 * scale),
+            icon: Icon(icon, color: _primaryTextColor, size: 28 * scale),
           ),
         ),
         SizedBox(height: 4 * scale),
@@ -663,7 +580,7 @@ class _RadioHomePageState extends State<RadioHomePage> {
                           ),
                         );
                       },
-                  fit: BoxFit.cover,
+                  fit: BoxFit.contain,
                   fadeInDuration: const Duration(milliseconds: 350),
                   fadeOutDuration: const Duration(milliseconds: 180),
                 ),
@@ -682,10 +599,10 @@ class _RadioHomePageState extends State<RadioHomePage> {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(
-        16 * scale,
-        16 * scale,
-        16 * scale,
-        18 * scale,
+        12 * scale,
+        8 * scale,
+        12 * scale,
+        6 * scale,
       ),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(34 * scale),
@@ -729,7 +646,7 @@ class _RadioHomePageState extends State<RadioHomePage> {
               ),
             ],
           ),
-          SizedBox(height: 14 * scale),
+          SizedBox(height: 4 * scale),
           Row(
             children: <Widget>[
               IconButton(
@@ -767,18 +684,18 @@ class _RadioHomePageState extends State<RadioHomePage> {
     required double scale,
   }) {
     return Container(
-      width: 108 * scale,
-      height: 108 * scale,
+      width: 94 * scale,
+      height: 94 * scale,
       decoration: BoxDecoration(
         color: const Color(0x2BFFFFFF),
-        borderRadius: BorderRadius.circular(54 * scale),
+        borderRadius: BorderRadius.circular(47 * scale),
       ),
       child: Center(
         child: FilledButton(
           style: FilledButton.styleFrom(
             backgroundColor: const Color(0xFFE02448),
             shape: const CircleBorder(),
-            minimumSize: Size(82 * scale, 82 * scale),
+            minimumSize: Size(72 * scale, 72 * scale),
             padding: EdgeInsets.zero,
             elevation: 4,
           ),
@@ -795,7 +712,7 @@ class _RadioHomePageState extends State<RadioHomePage> {
               : Icon(
                   isPlaying ? Icons.stop_rounded : Icons.play_arrow_rounded,
                   color: _primaryTextColor,
-                  size: 44 * scale,
+                  size: 38 * scale,
                 ),
         ),
       ),
@@ -811,8 +728,8 @@ class _RadioHomePageState extends State<RadioHomePage> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 56 * scale,
-        height: 56 * scale,
+        width: 50 * scale,
+        height: 50 * scale,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: _isDarkMode
@@ -832,7 +749,7 @@ class _RadioHomePageState extends State<RadioHomePage> {
             ),
           ],
         ),
-        child: FaIcon(icon, color: iconColor, size: 28 * scale),
+        child: FaIcon(icon, color: iconColor, size: 24 * scale),
       ),
     );
   }
