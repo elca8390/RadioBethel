@@ -287,6 +287,9 @@ class _RadioHomePageState extends State<RadioHomePage> {
                 builder: (BuildContext context, BoxConstraints constraints) {
                   final bool compact =
                       constraints.maxHeight < 760 || constraints.maxWidth < 380;
+                  final double bottomSafeInset = MediaQuery.viewPaddingOf(
+                    context,
+                  ).bottom;
                   final double scale = (constraints.maxHeight / 860).clamp(
                     0.74,
                     1.0,
@@ -317,7 +320,7 @@ class _RadioHomePageState extends State<RadioHomePage> {
                               left: 20 * scale,
                               right: 20 * scale,
                               top: 10 * scale,
-                              bottom: 20,
+                              bottom: bottomSafeInset + 10,
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.center,
