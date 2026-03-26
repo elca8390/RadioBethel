@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:audio_service/audio_service.dart';
@@ -11,7 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 const String _stationName = 'Radio Bethel Costa Rica';
 const String _stationSubtitle = 'Emisora Cristiana';
-const String _streamUrl = 'http://51.222.154.65:8186/stream';
+const String _streamUrl = 'http://cloudstream2032.conectarhosting.com:8186/stream';
 const String _playStoreUrl =
     'https://play.google.com/store/apps/details?id=co.ecoingenieria.radiobethelcr';
 const String _notificationArtworkUrl =
@@ -122,10 +123,18 @@ class _RadioHomePageState extends State<RadioHomePage> {
     try {
       await _player.setVolume(_volume);
       await widget.audioHandler.prepare();
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = 'No se pudo conectar con la emisora.';
+        if (e.toString().contains('timeout')) {
+          _errorMessage = 'Tiempo de conexión agotado. Verifica tu conexión a internet.';
+        } else if (e.toString().contains('Connection refused') || e.toString().contains('Connection reset')) {
+          _errorMessage = 'No se pudo conectar con la emisora. Intenta más tarde.';
+        } else if (e.toString().contains('Network')) {
+          _errorMessage = 'Error de conectividad. Verifica tu conexión a internet.';
+        } else {
+          _errorMessage = 'No se pudo conectar con la emisora.';
+        }
       });
     } finally {
       if (mounted) {
@@ -150,10 +159,12 @@ class _RadioHomePageState extends State<RadioHomePage> {
       if (_errorMessage == null) {
         await widget.audioHandler.play();
       }
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = 'Error al iniciar la transmision.';
+        _errorMessage = e.toString().contains('timeout')
+            ? 'Tiempo de conexión agotado. Verifica tu conexión a internet.'
+            : 'Error al iniciar la transmisión. Intenta de nuevo.';
       });
     }
   }
@@ -775,6 +786,8 @@ class RadioAudioHandler extends BaseAudioHandler with SeekHandler {
 
   final AudioPlayer _player = AudioPlayer();
   bool _isPrepared = false;
+  static const Duration _connectTimeout = Duration(seconds: 15);
+  static const Duration _bufferTimeout = Duration(seconds: 30);
 
   AudioPlayer get player => _player;
 
@@ -783,8 +796,27 @@ class RadioAudioHandler extends BaseAudioHandler with SeekHandler {
 
   Future<void> _ensurePrepared() async {
     if (_isPrepared) return;
-    await _player.setAudioSource(AudioSource.uri(Uri.parse(_streamUrl)));
-    _isPrepared = true;
+    try {
+      final audioSource = AudioSource.uri(
+        Uri.parse(_streamUrl),
+        headers: <String, String>{
+          'User-Agent': 'Mozilla/5.0 (compatible; RadioBethelCR/1.0)',
+        },
+      );
+      
+      await _player.setAudioSource(audioSource).timeout(
+        _connectTimeout,
+        onTimeout: () {
+          throw TimeoutException(
+            'No se pudo conectar con la transmisión en ${_connectTimeout.inSeconds} segundos',
+          );
+        },
+      );
+      _isPrepared = true;
+    } catch (e) {
+      _isPrepared = false;
+      rethrow;
+    }
     _broadcastState();
   }
 
@@ -821,7 +853,19 @@ class RadioAudioHandler extends BaseAudioHandler with SeekHandler {
   @override
   Future<void> play() async {
     await _ensurePrepared();
-    await _player.play();
+    try {
+      await _player.play().timeout(
+        _bufferTimeout,
+        onTimeout: () {
+          throw TimeoutException(
+            'No se pudo iniciar la reproducción en ${_bufferTimeout.inSeconds} segundos',
+          );
+        },
+      );
+    } catch (e) {
+      await stop();
+      rethrow;
+    }
     _broadcastState();
   }
 
